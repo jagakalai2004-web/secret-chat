@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Daily Notes</title>
+<title>Secret Chat</title>
 
 <style>
 
@@ -9,12 +9,12 @@ body{
 font-family:Arial;
 background:linear-gradient(135deg,#ff9ad5,#ffd6f6);
 text-align:center;
-padding:40px;
+padding:30px;
 }
 
 #login{
 background:white;
-padding:30px;
+padding:25px;
 border-radius:15px;
 width:300px;
 margin:auto;
@@ -25,58 +25,80 @@ box-shadow:0 0 10px rgba(0,0,0,0.2);
 display:none;
 }
 
-h1{
-color:#ff2e93;
-}
-
-input{
-padding:10px;
-border-radius:8px;
-border:1px solid #ccc;
-}
-
-button{
-padding:10px 15px;
-border:none;
-border-radius:10px;
+#header{
+width:350px;
+margin:auto;
 background:#ff2e93;
 color:white;
-cursor:pointer;
+padding:10px;
+border-radius:15px 15px 0 0;
+}
+
+#status{
+font-size:12px;
+opacity:0.9;
 }
 
 #chatbox{
-width:320px;
-height:300px;
+width:350px;
+height:320px;
 margin:auto;
 background:white;
-border-radius:15px;
 padding:10px;
 overflow-y:scroll;
 box-shadow:0 0 10px rgba(0,0,0,0.2);
 }
 
 .msg{
-background:#ffe0f3;
+max-width:70%;
 padding:8px;
 margin:5px;
 border-radius:10px;
-display:flex;
-justify-content:space-between;
-align-items:center;
+clear:both;
 }
 
-.deletebtn{
-background:red;
+.left{
+background:#eee;
+float:left;
+text-align:left;
+}
+
+.right{
+background:#ff2e93;
 color:white;
+float:right;
+text-align:left;
+}
+
+.msg img{
+max-width:150px;
+border-radius:8px;
+margin-top:5px;
+}
+
+.controls{
+font-size:10px;
+margin-top:3px;
+}
+
+input{
+padding:8px;
+border-radius:8px;
+border:1px solid #ccc;
+}
+
+button{
+padding:8px 12px;
 border:none;
-border-radius:5px;
-padding:3px 6px;
+border-radius:8px;
+background:#ff2e93;
+color:white;
 cursor:pointer;
 }
 
-#deleteall{
-background:black;
-margin-top:10px;
+#typing{
+font-size:12px;
+height:18px;
 }
 
 </style>
@@ -86,11 +108,9 @@ margin-top:10px;
 
 <div id="login">
 
-<h1>Daily Notes Access</h1>
+<h2>Daily Notes Access</h2>
 
-<p>Enter Access Code</p>
-
-<input type="password" id="pass">
+<input type="password" id="pass" placeholder="Enter password">
 
 <br><br>
 
@@ -100,37 +120,49 @@ margin-top:10px;
 
 </div>
 
+
 <div id="chatpage">
 
-<h1>Secret Chat ❤️</h1>
+<div id="header">
+
+<b>Secret Chat 💬</b>
+
+<div id="status">🟢 Online</div>
+
+</div>
 
 <div id="chatbox"></div>
 
-<br><br>
+<div id="typing"></div>
 
-<input type="text" id="message" placeholder="Type message">
+<br>
+
+<input type="text" id="message" placeholder="Type message..." oninput="typing()">
+
+<input type="file" id="img">
 
 <button onclick="send()">Send</button>
 
 <br><br>
 
-<button id="deleteall" onclick="deleteAll()">🗑 Delete All Chat</button>
+<button onclick="deleteAll()">Delete All Chat</button>
 
 </div>
+
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+import { getDatabase, ref, push, onChildAdded, remove, update } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAP1MzWKRQ0pMCwluBKr5XBE172r3te_lc",
-  authDomain: "secret-love-chat-76aed.firebaseapp.com",
-  databaseURL: "https://secret-love-chat-76aed-default-rtdb.firebaseio.com",
-  projectId: "secret-love-chat-76aed",
-  storageBucket: "secret-love-chat-76aed.firebasestorage.app",
-  messagingSenderId: "521543927192",
-  appId: "1:521543927192:web:cc6c8fe06a4b15260e57ed"
+apiKey:"AIzaSyAP1MzWKRQ0pMCwluBKr5XBE172r3te_lc",
+authDomain:"secret-love-chat-76aed.firebaseapp.com",
+databaseURL:"https://secret-love-chat-76aed-default-rtdb.firebaseio.com",
+projectId:"secret-love-chat-76aed",
+storageBucket:"secret-love-chat-76aed.appspot.com",
+messagingSenderId:"521543927192",
+appId:"1:521543927192:web:cc6c8fe06a4b15260e57ed"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -156,14 +188,37 @@ document.getElementById("wrong").innerHTML="Wrong Password";
 window.send=function(){
 
 var text=document.getElementById("message").value;
+var img=document.getElementById("img").files[0];
 
-if(text!=""){
+if(text!="" || img){
+
+if(img){
+
+var reader=new FileReader();
+
+reader.onload=function(e){
 
 push(ref(db,"messages"),{
-msg:text
+msg:text,
+image:e.target.result,
+side:"right"
 });
 
+}
+
+reader.readAsDataURL(img);
+
+}else{
+
+push(ref(db,"messages"),{
+msg:text,
+side:"right"
+});
+
+}
+
 document.getElementById("message").value="";
+document.getElementById("img").value="";
 
 }
 
@@ -172,16 +227,40 @@ document.getElementById("message").value="";
 window.delmsg=function(id){
 
 remove(ref(db,"messages/"+id));
+location.reload();
+
+}
+
+window.editmsg=function(id,old){
+
+var newmsg=prompt("Edit message",old);
+
+if(newmsg!=null){
+
+update(ref(db,"messages/"+id),{
+msg:newmsg
+});
 
 location.reload();
+
+}
 
 }
 
 window.deleteAll=function(){
 
 remove(ref(db,"messages"));
-
 location.reload();
+
+}
+
+window.typing=function(){
+
+document.getElementById("typing").innerHTML="Typing...";
+
+setTimeout(()=>{
+document.getElementById("typing").innerHTML="";
+},1500);
 
 }
 
@@ -190,16 +269,28 @@ onChildAdded(ref(db,"messages"), function(data){
 var box=document.getElementById("chatbox");
 
 var id=data.key;
-var text=data.val().msg;
+var d=data.val();
 
 var div=document.createElement("div");
-div.className="msg";
 
-div.innerHTML = text + " <button class='deletebtn' onclick='delmsg(\""+id+"\")'>❌</button>";
+div.className="msg "+(d.side=="right"?"right":"left");
+
+var html=d.msg || "";
+
+if(d.image){
+html+="<br><img src='"+d.image+"'>";
+}
+
+html+="<div class='controls'>"+
+"<button onclick='editmsg(\""+id+"\",\""+d.msg+"\")'>✏</button>"+
+"<button onclick='delmsg(\""+id+"\")'>❌</button>"+
+"</div>";
+
+div.innerHTML=html;
 
 box.appendChild(div);
 
-box.scrollTop = box.scrollHeight;
+box.scrollTop=box.scrollHeight;
 
 });
 
